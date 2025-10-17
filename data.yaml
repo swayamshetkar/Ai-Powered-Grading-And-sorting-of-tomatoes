@@ -1,0 +1,6 @@
+train: data/processed/train
+val: data/processed/val
+test: data/processed/test
+
+nc: 3
+names: ['ripe', 'unripe', 'damaged']

@@ -1,0 +1,4 @@
+train: data/finetune/images
+val: data/finetune/images  # you can split val separately if you want
+nc: 3
+names: ['ripe', 'unripe', 'damaged']

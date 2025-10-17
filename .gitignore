@@ -1,0 +1,31 @@
+# Python cache and virtual env
+__pycache__/
+*.py[cod]
+venv/
+env/
+
+# IDE / editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Credentials or models
+credentials.json
+*.env
+*.gguf
+*.pt
+*.pth
+*.bin
+
+# Data folders
+data/raw/
+data/interim/
+data/temp/
+data/processed
