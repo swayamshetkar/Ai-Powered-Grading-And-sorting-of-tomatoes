@@ -1,0 +1,9 @@
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=11.0.0   # YOLOv11 via ultralytics package
+numpy
+pillow
+opencv-python
+pandas
+scikit-learn
+tqdm
