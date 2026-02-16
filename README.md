@@ -1,61 +1,69 @@
-#  TomatoQualityAI
+# TomatoQualityAI 🍅
 
-A YOLO-based machine learning project for automatic grading and sorting of tomatoes into three categories: **ripe**, **unripe**, and **damaged**.
+**A YOLO-based machine learning project for automatic grading and sorting of tomatoes.**
+
+## 🏆 Achievements
+This project was developed in a **24-hour hackathon** organized by **IIHR (Indian Institute of Horticultural Research)** under the Horticulture Department of India.
+We ranked among the **Top 5 teams** in the competition! 🌟
+
+## 📖 About the Project
+Our goal is to assist farmers and food processing units by automating tomato quality detection, reducing human error, and speeding up the sorting process.
+
+### From Hardware to Web 🛠️ ➡️ 🌐
+Originally, this project was deployed on a **Raspberry Pi** with camera sensors for a physical sorting mechanism. For easier access and demonstration purposes, we have evolved it into this **Web Application** to visualize the model's output and performance in real-time.
+
+## 🚀 Key Features
+- **Real-time Detection:** Instantly classifies tomatoes into three categories:
+  - **Ripe** 🍅
+  - **Unripe** 🍏
+  - **Damaged** 🍂
+- **High Efficiency:** Powered by YOLOv8 for fast and accurate inference.
+- **Scalable:** Can be integrated with sorting machinery or robotic arms, and adapted for other fruits.
+
+## 🏗️ How We Built It
+
+### 1. Data Collection & Preprocessing
+- **Sources:** Collected multiple datasets from Kaggle and open-source repositories.
+- **Cleaning:** All images were cleaned and reclassified into Ripe, Unripe, and Damaged.
+- **Augmentation:** Applied rotation, flipping, and brightness adjustments to increase robustness.
+- **Split:** Final dataset divided into Training (80%), Validation (10%), and Testing (10%).
+
+### 2. Model Training
+- **Algorithm:** **YOLOv8** (You Only Look Once, Version 8) - state-of-the-art for real-time object detection.
+- **Process:**
+  1. Base training for **80 epochs** on the cleaned dataset.
+  2. **Fine-tuned** with custom data collected by IIHR to ensure accuracy for Indian tomato varieties.
+- **Tools:** PyTorch backend, OpenCV for image handling, and Ultralytics YOLOv8 framework.
+
+## 💻 Tech Stack
+- **YOLOv8:** Object detection & classification
+- **Python:** Main development language
+- **OpenCV:** Image processing
+- **PyTorch:** Deep learning framework
+- **NumPy / Pandas:** Data cleaning and analysis
+- **Gradio:** Web Interface
+
+## 📦 Installation & Usage
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/swayamshetkar/TomatoQualityAI.git
+   cd TomatoQualityAI
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the Application:**
+   ```bash
+   python app.py
+   ```
+
+## 👥 Contributors
+- **[@swayamshetkar](https://github.com/swayamshetkar)**
+- **[@codeyatri-dev](https://github.com/codeyatri-dev)**
 
 ---
-
-##  About the Project
-This project was developed in a **24-hour hackathon** organized by **IIHR (Indian Institute of Horticultural Research)** under the **Horticulture Department of India**.  
-We ranked among the **Top 5 teams** in the competition.
-
-Our goal was to assist farmers and food processing units by automating tomato quality detection, reducing human error, and speeding up the sorting process.
-
----
-
-##  How We Built It
-
-###  Data Collection & Preprocessing
-- We collected multiple tomato image datasets from **Kaggle** and other open-source repositories.  
-- All images were **cleaned and reclassified** into three main categories:
-  -  **Ripe**
-  -  **Unripe**
-  -  **Damaged**
-- Performed **data augmentation** (rotation, flipping, brightness adjustments) to increase model robustness.  
-- Removed duplicate and low-quality images.  
-- Final dataset was split into **training (80%)**, **validation (10%)**, and **testing (10%)**.
-
-###  Model Training
-- Trained using **YOLOv8 (You Only Look Once, Version 8)** — a state-of-the-art real-time object detection algorithm.
-- YOLO divides an image into grids and predicts bounding boxes and class probabilities simultaneously, making it **extremely fast and efficient** for real-time applications.
-- Our training process:
-  - Base training for **80 epochs** on cleaned dataset.
-  - Fine-tuned the model with our **custom IIHR-collected data** for better accuracy in Indian tomato varieties.
-- Used **PyTorch backend**, **OpenCV** for image handling, and **Ultralytics YOLOv8** framework for training and inference.
-
----
-
-##  Tech Stack
--  **YOLOv8** — object detection & classification  
--  **Python** — main development language  
--  **OpenCV** — image processing  
--  **PyTorch** — deep learning framework  
--  **NumPy / Pandas** — data cleaning and analysis  
-
----
-
-##  Features
-- Detects and classifies tomatoes as:
-  -  **Ripe**
-  -  **Unripe**
-  -  **Damaged**
-- Works in **real-time** with camera input.
-- Easy to **integrate with sorting machinery** or robotic arms.
-- Scalable to other fruits or quality categories.
-
----
-
-##  Dataset
-Custom-collected and processed dataset derived from multiple Kaggle sources.  
-Each image is annotated using YOLO format (`.txt` labels) containing bounding box coordinates and class IDs.
-cd TomatoQualityAI
-pip install -r requirements.txt
+*Built with ❤️ for agriculture and innovation.*
