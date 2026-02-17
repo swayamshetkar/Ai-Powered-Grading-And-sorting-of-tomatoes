@@ -130,6 +130,22 @@ function toggleAutoDetect() {
 // ============================================================
 // Detection via Gradio API
 // ============================================================
+
+/**
+ * Convert a base64 data URL to a Blob for proper file upload.
+ */
+function base64ToBlob(base64DataUrl) {
+    const parts = base64DataUrl.split(",");
+    const mime = parts[0].match(/:(.*?);/)[1];
+    const byteString = atob(parts[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mime });
+}
+
 async function runDetection() {
     if (isProcessing) return;
     isProcessing = true;
@@ -153,31 +169,27 @@ async function runDetection() {
             throw new Error("No image available");
         }
 
-        // Step 1: Upload the image to the Gradio API
+        // Step 1: Upload the image as a file to the Gradio API
+        const blob = base64ToBlob(base64Image);
+        const formData = new FormData();
+        formData.append("files", blob, "image.jpg");
+
         const uploadRes = await fetch(`${API_BASE}/upload`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                files: [base64Image]
-            })
+            body: formData
         });
 
-        let imagePath;
+        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
 
-        if (uploadRes.ok) {
-            const uploadedFiles = await uploadRes.json();
-            imagePath = uploadedFiles[0];
-        } else {
-            // Fallback: try sending base64 directly
-            imagePath = base64Image;
-        }
+        const uploadedFiles = await uploadRes.json();
+        const imagePath = uploadedFiles[0];
 
         // Step 2: Call predict endpoint
         const callRes = await fetch(`${API_BASE}/call/predict`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                data: [imagePath]
+                data: [{ path: imagePath, meta: { _type: "gradio.FileData" } }]
             })
         });
 
@@ -186,7 +198,7 @@ async function runDetection() {
         const callData = await callRes.json();
         const eventId = callData.event_id;
 
-        // Step 3: Get results via event stream
+        // Step 3: Get results via SSE event stream
         const result = await getEventResult(eventId);
 
         const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
@@ -200,6 +212,8 @@ async function runDetection() {
             // Show detection image
             if (outputImage && outputImage.url) {
                 resultImage.src = outputImage.url;
+            } else if (outputImage && outputImage.path) {
+                resultImage.src = `${API_BASE}/file=${outputImage.path}`;
             } else if (typeof outputImage === "string") {
                 resultImage.src = outputImage;
             }
@@ -247,6 +261,7 @@ async function runDetection() {
 async function getEventResult(eventId) {
     return new Promise((resolve, reject) => {
         const url = `${API_BASE}/call/predict/${eventId}`;
+        let resolved = false;
 
         fetch(url).then(response => {
             const reader = response.body.getReader();
@@ -255,22 +270,45 @@ async function getEventResult(eventId) {
 
             function read() {
                 reader.read().then(({ done, value }) => {
-                    if (done) {
-                        reject(new Error("Stream ended without result"));
-                        return;
-                    }
+                    if (resolved) return;
 
                     buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split("\n");
 
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i].trim();
+                    // Process complete SSE messages (separated by double newlines)
+                    const messages = buffer.split("\n");
+                    let currentEvent = "";
 
-                        if (line.startsWith("data:")) {
+                    for (let i = 0; i < messages.length - 1; i++) {
+                        const line = messages[i].trim();
+
+                        if (line.startsWith("event:")) {
+                            currentEvent = line.substring(6).trim();
+                        } else if (line.startsWith("data:")) {
                             const dataStr = line.substring(5).trim();
+
+                            if (currentEvent === "error") {
+                                resolved = true;
+                                reject(new Error(`Gradio error: ${dataStr}`));
+                                return;
+                            }
+
+                            // "complete" event has the final result as a JSON array
+                            if (currentEvent === "complete") {
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    resolved = true;
+                                    resolve(data);
+                                    return;
+                                } catch (e) {
+                                    // Not valid JSON, keep reading
+                                }
+                            }
+
+                            // Also try parsing any data line for a direct array result
                             try {
                                 const data = JSON.parse(dataStr);
-                                if (data && data.length >= 2) {
+                                if (Array.isArray(data) && data.length >= 2) {
+                                    resolved = true;
                                     resolve(data);
                                     return;
                                 }
@@ -281,15 +319,32 @@ async function getEventResult(eventId) {
                     }
 
                     // Keep last partial line in buffer
-                    buffer = lines[lines.length - 1];
+                    buffer = messages[messages.length - 1];
+
+                    if (done) {
+                        if (!resolved) {
+                            reject(new Error("Stream ended without result"));
+                        }
+                        return;
+                    }
+
                     read();
-                }).catch(reject);
+                }).catch(err => {
+                    if (!resolved) reject(err);
+                });
             }
             read();
-        }).catch(reject);
+        }).catch(err => {
+            if (!resolved) reject(err);
+        });
 
         // Timeout after 30 seconds
-        setTimeout(() => reject(new Error("Detection timed out")), 30000);
+        setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                reject(new Error("Detection timed out"));
+            }
+        }, 30000);
     });
 }
 
